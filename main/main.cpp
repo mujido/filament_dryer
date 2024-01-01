@@ -111,7 +111,7 @@ extern "C" void app_main()
                 float temp = avg * conv_slope + conv_offset;
                 float voltage = avg * 3.3f / (1 << kAdcBitWidth);
 
-                ESP_LOGI(TAG, "Avg reading: %lu (%.0f) [%.4fV]", avg, temp, voltage);
+                ESP_LOGI(TAG, "Avg reading: %lu (%.1f) [%.4fV]", avg, temp, voltage);
 
                 vTaskDelay(1000 / portTICK_PERIOD_MS);
             } else if (ret == ESP_ERR_TIMEOUT) {
