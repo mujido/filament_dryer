@@ -11,7 +11,8 @@
 	 */
 	"workspaceFolder": "${localWorkspaceFolder}",
 	"mounts": [
-		"source=extensionCache,target=/root/.vscode-server/extensions,type=volume"
+		"source=extensionCache,target=/root/.vscode-server/extensions,type=volume",
+		"source=/home/kurt/.ssh/esp,target=/home/esp/.ssh,type=bind"
 	],
 	"customizations": {
 		"vscode": {
