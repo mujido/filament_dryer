@@ -12,7 +12,7 @@ constexpr const char* TAG = "main";
 
 constexpr uint32_t kAdcBufferSize = 1024;
 constexpr uint32_t kAdcSampleRate = 20'000;
-constexpr uint32_t kAdcSamplesToRead = 20;
+constexpr uint32_t kAdcSamplesToRead = 100;
 constexpr uint32_t kAdcSampleReadSize = kAdcSamplesToRead * SOC_ADC_DIGI_RESULT_BYTES;
 constexpr auto kAdcBitWidth = ADC_BITWIDTH_10;
 constexpr auto kAdcUnit = ADC_UNIT_1;
@@ -98,20 +98,18 @@ extern "C" void app_main()
 
                 avg /= reading_count;
 
-                // Convert to temperature using fix point Q23.8
-                // constexpr int32_t conv_offset = 121.657 * (1L << 8);
-                // constexpr int32_t conv_slope = -0.11373 * (1L << 8);
+                // Correct for non-lineararity in ESP32 ADC.
+                const float avg2 = avg * avg;
+                const float avg3 = avg2 * avg;
+                const float adc_corr = 40.4597f + 0.976323f*avg + 0.000163748f*avg2 - 1.76614e-7f*avg3;
 
-                // int32_t q23_temp = avg * conv_slope;
-                // q23_temp = conv_offset + q23_temp;
+                // Calculate temperature based off calibration curve
+                const float adc_corr2 = adc_corr * adc_corr;
+                const float temp = 129.85f - 0.150499*adc_corr + 0.0000343308f*adc_corr2;
 
-                constexpr float conv_offset = 121.657f;
-                constexpr float conv_slope = -0.11373f;
+                const float voltage = adc_corr * 3.3f / (1 << kAdcBitWidth);
 
-                float temp = avg * conv_slope + conv_offset;
-                float voltage = avg * 3.3f / (1 << kAdcBitWidth);
-
-                ESP_LOGI(TAG, "Avg reading: %lu (%.1f) [%.4fV]", avg, temp, voltage);
+                ESP_LOGI(TAG, "Avg reading: %lu corrected %lu (%.1f) [%.4fV]", avg, (uint32_t)adc_corr, temp, voltage);
 
                 vTaskDelay(1000 / portTICK_PERIOD_MS);
             } else if (ret == ESP_ERR_TIMEOUT) {
